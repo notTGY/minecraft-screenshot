@@ -1,0 +1,17 @@
+{
+  "name": "minecraft-screenshots",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "canvas": "^3.1.0",
+    "mineflayer": "^4.25.0",
+    "prismarine-viewer": "^1.33.0"
+  }
+}
