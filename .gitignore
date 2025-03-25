@@ -1,2 +1,17 @@
+.env
+
 node_modules
 package-lock.json
+
+output.jpg
+output_4k.jpg
+
+libraries
+logs
+versions
+world
+banned-ips.json
+banned-players.json
+ops.json
+usercache.json
+whitelist.json

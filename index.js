@@ -1,62 +1,108 @@
-const mineflayer = require('mineflayer')
-const { mineflayer: mineflayerViewer } = require('prismarine-viewer')
+require('dotenv').config(); // For environment variables
+const { spawn } = require('node:child_process')
+const { resolve } = require('node:path')
+const { takeScreenshot } = require('./screenshot.js')
+const { captionAi } = require('./ai-caption.js')
+const fs = require('node:fs')
 
-// Server configuration
-const host = 'localhost' // Change this if your server is not local
-const port = 25565
-const username = 'SpawnViewerBot' // Bot's username
 
-// Create bot instance
-const bot = mineflayer.createBot({
-  host: host,
-  port: port,
-  username: username
+const startTime = Date.now()
+
+const TelegramBot = require('node-telegram-bot-api')
+const chatId = process.env.TGID
+const botToken = process.env.BOT_TOKEN
+const DEBUG = process.env.DEBUG
+
+const bot = new TelegramBot(botToken, {
+  polling: true,
+  filepath: false,
 })
 
-// Error handling
-bot.on('error', (err) => {
-  console.error('Bot encountered an error:', err)
-})
 
-// When bot spawns
-bot.once('spawn', () => {
-  console.log('Bot spawned in the world')
-  
-  // Start the viewer
-  mineflayerViewer(bot, {
-    port: 3000, // Web server port for viewing (visit localhost:3000 in browser)
-    firstPerson: false, // Third person view
-    viewDistance: 16 // Chunk view distance
+
+const args = process.argv.slice(2)
+if (args.length > 0 && args[0] === "regen") {
+  fs.rmSync('./world', {
+    force: true,
+    recursive: true,
   })
+}
 
-  // Wait a few seconds for chunks to load
-  setTimeout(async () => {
-    try {
-      // Take screenshot
-      const buffer = await bot.viewer.getScreenshot()
-      
-      // Save screenshot to file
-      const fs = require('fs')
-      fs.writeFileSync('spawn-screenshot.png', buffer)
-      console.log('Screenshot saved as spawn-screenshot.png')
-      
-      // Close bot after taking screenshot
-      bot.quit()
-      process.exit(0)
-    } catch (err) {
-      console.error('Error taking screenshot:', err)
-      bot.quit()
-      process.exit(1)
+
+const s = spawn(
+  'java',
+  [
+    '-jar',
+    resolve('./minecraft_server.jar'),
+    'nogui',
+  ]
+)
+
+const gracefulShutdown = () => {
+  s.stdin.write('stop\n')
+}
+
+let seed = null
+const getSeed = (data) => {
+  seed = new String(data).substring(data.indexOf('Seed: ['))
+}
+const onServerReady = async () => {
+  s.stdin.write('/seed\n')
+
+  await takeScreenshot(false)
+  await takeScreenshot(true)
+
+  const cap = await captionAi()
+  const finalCaption = `${cap}
+
+${seed}
+#MinecraftSeeds #Minecraft`
+
+  const filename = 'output_4k'
+  const fileOptionsPhoto = {
+    filename,
+    contentType: 'image/jpg',
+  }
+  const streamPhoto = fs.createReadStream(`./${filename}.jpg`)
+  bot.sendPhoto(chatId, streamPhoto, {
+    caption: finalCaption,
+  }, fileOptionsPhoto)
+
+  if (DEBUG) {
+    console.log({finalCaption})
+  }
+
+  gracefulShutdown()
+  const endTime = Date.now()
+  const dt = (endTime - startTime) / (60*1000)
+  console.log(`Took ${dt}m`)
+}
+
+s.stdout.on('data', (data) => {
+  if (DEBUG) {
+    console.log(`# ${data}`)
+  }
+  if (data.indexOf(': Done ') != -1) {
+    if (DEBUG) {
+      console.log('Server ready!')
     }
-  }, 5000) // Wait 5 seconds for world to load
+    onServerReady()
+  }
+  if (data.indexOf('Seed: [') != -1) {
+    getSeed(data)
+  }
 })
 
-// Log when connected
-bot.on('login', () => {
-  console.log('Bot connected to server')
+s.stderr.on('data', (data) => {
+  console.error(`stderr: ${data}`)
 })
 
-// Handle disconnection
-bot.on('end', () => {
-  console.log('Bot disconnected from server')
+s.on('close', (code) => {
+  if (DEBUG) {
+    console.log(`exited with code ${code}`)
+  }
+  process.exit(0)
 })
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);

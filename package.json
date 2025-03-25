@@ -10,8 +10,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "canvas": "^3.1.0",
+    "axios": "^1.8.4",
+    "dotenv": "^16.4.7",
     "mineflayer": "^4.25.0",
+    "node-canvas-webgl": "github:PrismarineJS/node-canvas-webgl",
+    "node-telegram-bot-api": "^0.66.0",
+    "openai": "^4.89.0",
     "prismarine-viewer": "^1.33.0"
   }
 }
