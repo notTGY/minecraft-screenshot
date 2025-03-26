@@ -12,10 +12,8 @@ const mineflayer = require('mineflayer')
 const { execSync } = require('child_process')
 
 
-const viewDistance = 64 // Number of chunks around the center to render
-
-const whFromQual = (qual) => {
-  switch (qual) {
+const whFromQuality = (quality) => {
+  switch (quality) {
     case '4k':
       return { width: 3840, height: 2160 }
     case '360p':
@@ -25,9 +23,14 @@ const whFromQual = (qual) => {
   }
 }
 
-const takeScreenshot = async (mcVersion, qual, dirs) => {
-  const { width, height } = whFromQual(qual)
-  if (dirs.length === 0) {
+const takeScreenshot = async ({
+  mcVersion,
+  viewDistance,
+  quality,
+  directions,
+}) => {
+  const { width, height } = whFromQuality(quality)
+  if (directions.length === 0) {
     throw new Error('No directions')
   }
 
@@ -66,12 +69,12 @@ const takeScreenshot = async (mcVersion, qual, dirs) => {
   const worldView = new WorldView(bot.world, viewDistance, center)
   viewer.listen(worldView)
 
-  const snap = async (dir) => {
+  const snap = async (direction) => {
     viewer.camera.position.set(center.x, center.y+10, center.z)
 
     let x = center.x
     let z = center.z
-    switch (dir) {
+    switch (direction) {
       case "south":
       default:
         z += 10
@@ -99,11 +102,15 @@ const takeScreenshot = async (mcVersion, qual, dirs) => {
     })
 
     const buf = await getBufferFromStream(imageStream)
-    await fs.writeFile(`output/${qual}_${dir}.jpg`, buf)
+    await fs.writeFile(`output/${quality}_${direction}.jpg`, buf)
   }
-  for (const dir of dirs) {
-    await snap(dir)
-    bot.chat(`Took ${qual} picture of ${dir}`)
+  for (let i = 0; i < directions.length; i++) {
+    const direction = directions[i]
+    await snap(direction)
+    const p = (100*(i+1)/directions.length).toFixed(0)
+    bot.chat(
+      `Took ${quality} picture of ${direction}; ${p}% Done`
+    )
   }
   /*
   bot.on('chat', (username, message) => {

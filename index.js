@@ -34,11 +34,12 @@ if (args.length > 0 && args[0] === "regen") {
 let seed = null
 const getSeed = (data) => {
   seed = new String(data)
-    .substring(data.indexOf('Seed: ['))
+    .substring(data.indexOf('Seed: '))
 }
 
 const start = async () => {
-  const mcVersion = '1.21.4' // Minecraft version (must match the server)
+  const mcVersion = '1.8.8' // Minecraft version (must match the server)
+  const viewDistance = 16
   if (!fs.existsSync('./minecraft_server.jar')) {
     await downloadServer(mcVersion)
   }
@@ -65,8 +66,18 @@ const start = async () => {
     if (!fs.existsSync('./output')) {
       fs.mkdirSync('./output')
     }
-    await takeScreenshot(mcVersion, '360p', ["north"])
-    await takeScreenshot(mcVersion, '4k', ["north", "south", "east", "west"])
+    await takeScreenshot({
+      mcVersion,
+      viewDistance,
+      quality: '360p',
+      directions: ["north"],
+    })
+    await takeScreenshot({
+      mcVersion,
+      viewDistance,
+      quality: '4k',
+      directions: ["north", "south", "east", "west"],
+    })
 
     const cap = await captionAi('./output/360p_north.jpg')
     const finalCaption = `${cap}
@@ -104,7 +115,7 @@ const start = async () => {
       }
       onServerReady()
     }
-    if (data.indexOf('Seed: [') != -1) {
+    if (data.indexOf('Seed: ') != -1) {
       getSeed(data)
     }
   })
