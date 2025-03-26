@@ -13,7 +13,6 @@ const { execSync } = require('child_process')
 
 
 const viewDistance = 64 // Number of chunks around the center to render
-const mcVersion = '1.21.4' // Minecraft version (must match the server)
 
 const whFromQual = (qual) => {
   switch (qual) {
@@ -26,7 +25,7 @@ const whFromQual = (qual) => {
   }
 }
 
-const takeScreenshot = async (qual, dirs) => {
+const takeScreenshot = async (mcVersion, qual, dirs) => {
   const { width, height } = whFromQual(qual)
   if (dirs.length === 0) {
     throw new Error('No directions')

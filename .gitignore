@@ -16,3 +16,6 @@ whitelist.json
 *.log
 
 output_*.jpg
+
+version_manifest.json
+manifest_*.json
