@@ -46,7 +46,10 @@ const takeScreenshot = async ({
     if (DEBUG) {
       console.log(`Chunks loaded: ${loadedChunks}`)
     }
-    if (loadedChunks >= (viewDistance * 2 + 1) * (viewDistance * 2 + 1) || loadedChunks == prevLoaded) {
+    if (
+      loadedChunks >= (viewDistance * 2 + 1) * (viewDistance * 2 + 1)
+      || (loadedChunks == prevLoaded && loadedChunks > 0)
+    ) {
       res()
     } else {
       setTimeout(() => {
