@@ -4,12 +4,12 @@ require('dotenv').config()
 
 const DEBUG = process.env.DEBUG
 
-const client = new OpenAI({
-  baseURL: "https://router.huggingface.co/hf-inference/v1",
-  apiKey: process.env.HF_API_TOKEN,
-})
-
 async function captionImage(imagePath, prompt) {
+  const client = new OpenAI({
+    baseURL: "https://router.huggingface.co/hf-inference/v1",
+    apiKey: process.env.HF_API_TOKEN,
+  })
+
   try {
     const imageData = await fs.readFile(imagePath)
     const base64Image = Buffer.from(imageData).toString('base64')
