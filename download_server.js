@@ -1,6 +1,7 @@
-const https = require('https');
-const fs = require('fs');
-
+require('dotenv').config()
+const DEBUG = process.env.DEBUG
+const https = require('https')
+const fs = require('fs')
 
 const downloadFile = (url, outputFile) => new Promise((resolve, reject) => {
   https.get(url, (response) => {
@@ -14,7 +15,9 @@ const downloadFile = (url, outputFile) => new Promise((resolve, reject) => {
 
     fileStream.on('finish', () => {
       fileStream.close()
-      console.log(`Successfully downloaded ${outputFile}`)
+      if (DEBUG) {
+        console.log(`Successfully downloaded ${outputFile}`)
+      }
       resolve()
     })
 
@@ -56,11 +59,16 @@ const downloadVersionInfo = (mcVersion) => {
   const outputFile = `manifest_${mcVersion}.json`
   return downloadFile(url, outputFile)
 }
+const downloadJar = (mcVersion) => {
+  const manifest = loadJson(`manifest_${mcVersion}.json`)
+  const url = manifest.downloads.server.url
+  const outputFile = `minecraft_server.jar`
+  return downloadFile(url, outputFile)
+}
 
 const downloadServer = async (mcVersion) => {
   await downloadManifest()
   await downloadVersionInfo(mcVersion)
-  console.log('hi')
-  process.exit(1)
+  await downloadJar(mcVersion)
 }
 module.exports = { downloadServer }

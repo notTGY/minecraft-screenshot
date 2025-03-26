@@ -12,6 +12,7 @@ banned-players.json
 ops.json
 usercache.json
 whitelist.json
+minecraft_server.jar
 
 *.log
 
