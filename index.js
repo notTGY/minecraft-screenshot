@@ -29,7 +29,7 @@ const sendMessage = async (caption) => {
   await bot.sendPhoto(chatId, streamPhoto, { caption }, fileOptionsPhoto)
 
   if (DEBUG) {
-    console.log({finalCaption})
+    console.log({caption})
   }
 }
 
@@ -52,8 +52,8 @@ const getSeed = (data) => {
 }
 
 const start = async () => {
-  const mcVersion = '1.8.8' // Minecraft version (must match the server)
-  const viewDistance = 16
+  const mcVersion = '1.21.4' // Minecraft version (must match the server)
+  const viewDistance = 64
   if (!fs.existsSync('./minecraft_server.jar')) {
     await downloadServer(mcVersion)
   }
