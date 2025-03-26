@@ -62,21 +62,24 @@ const start = async () => {
   const onServerReady = async () => {
     s.stdin.write('/seed\n')
 
+    if (!fs.existsSync('./output')) {
+      fs.mkdirSync('./output')
+    }
     await takeScreenshot(mcVersion, '360p', ["north"])
     await takeScreenshot(mcVersion, '4k', ["north", "south", "east", "west"])
 
-    const cap = await captionAi('./output_360p_north.jpg')
+    const cap = await captionAi('./output/360p_north.jpg')
     const finalCaption = `${cap}
 
   ${seed}
 #MinecraftSeeds #Minecraft`
 
-    const filename = 'output_4k_north'
+    const filename = '4k_north'
     const fileOptionsPhoto = {
       filename,
       contentType: 'image/jpg',
     }
-    const streamPhoto = fs.createReadStream(`./${filename}.jpg`)
+    const streamPhoto = fs.createReadStream(`./output/${filename}.jpg`)
     bot.sendPhoto(chatId, streamPhoto, {
       caption: finalCaption,
     }, fileOptionsPhoto)

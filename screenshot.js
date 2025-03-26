@@ -99,11 +99,19 @@ const takeScreenshot = async (mcVersion, qual, dirs) => {
     })
 
     const buf = await getBufferFromStream(imageStream)
-    await fs.writeFile(`output_${qual}_${dir}.jpg`, buf)
+    await fs.writeFile(`output/${qual}_${dir}.jpg`, buf)
   }
   for (const dir of dirs) {
     await snap(dir)
+    bot.chat(`Took ${qual} picture of ${dir}`)
   }
+  /*
+  bot.on('chat', (username, message) => {
+    if (username === 'Player') return;
+    console.log({message})
+    bot.chat(message)
+  })
+  */
 }
 
 module.exports = { takeScreenshot }

@@ -16,7 +16,7 @@ minecraft_server.jar
 
 *.log
 
-output_*.jpg
-
 version_manifest.json
 manifest_*.json
+
+output
