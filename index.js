@@ -30,6 +30,7 @@ if (args.length > 0 && args[0] === "regen") {
     console.log("removed world")
   }
 }
+const sleep = (t) => new Promise(r => setTimeout(r, t))
 
 let seed = null
 const getSeed = (data) => {
@@ -62,6 +63,7 @@ const start = async () => {
 
   const onServerReady = async () => {
     s.stdin.write('/seed\n')
+    await sleep(1000)
 
     if (!fs.existsSync('./output')) {
       fs.mkdirSync('./output')
@@ -79,7 +81,8 @@ const start = async () => {
       directions: ["north", "south", "east", "west"],
     })
 
-    const cap = await captionAi('./output/360p_north.jpg')
+    //const cap = await captionAi('./output/360p_north.jpg')
+    const cap = 'AI DISABLED'
     const finalCaption = `${cap}
 
   ${seed}
