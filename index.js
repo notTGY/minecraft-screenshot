@@ -11,14 +11,27 @@ const { downloadServer } = require('./download_server.js')
 
 const startTime = Date.now()
 
-const chatId = process.env.TGID
-const botToken = process.env.BOT_TOKEN
 const DEBUG = process.env.DEBUG
 
-const bot = new TelegramBot(botToken, {
-  polling: true,
-  filepath: false,
-})
+const sendMessage = async (caption) => {
+  const chatId = process.env.TGID
+  const botToken = process.env.BOT_TOKEN
+  const bot = new TelegramBot(botToken, {
+    polling: true,
+    filepath: false,
+  })
+  const filename = '4k_north'
+  const fileOptionsPhoto = {
+    filename,
+    contentType: 'image/jpg',
+  }
+  const streamPhoto = fs.createReadStream(`./output/${filename}.jpg`)
+  await bot.sendPhoto(chatId, streamPhoto, { caption }, fileOptionsPhoto)
+
+  if (DEBUG) {
+    console.log({finalCaption})
+  }
+}
 
 const args = process.argv.slice(2)
 if (args.length > 0 && args[0] === "regen") {
@@ -81,25 +94,19 @@ const start = async () => {
       directions: ["north", "south", "east", "west"],
     })
 
-    //const cap = await captionAi('./output/360p_north.jpg')
-    const cap = 'AI DISABLED'
-    const finalCaption = `${cap}
+    let cap = ''
+    if (process.env.HF_API_TOKEN) {
+      cap = await captionAi('./output/360p_north.jpg')
+    } else {
+      cap = 'AI DISABLED, add HF_API_TOKEN in .env'
+    }
+    const caption = `${cap}
 
   ${seed}
 #MinecraftSeeds #Minecraft`
 
-    const filename = '4k_north'
-    const fileOptionsPhoto = {
-      filename,
-      contentType: 'image/jpg',
-    }
-    const streamPhoto = fs.createReadStream(`./output/${filename}.jpg`)
-    bot.sendPhoto(chatId, streamPhoto, {
-      caption: finalCaption,
-    }, fileOptionsPhoto)
-
-    if (DEBUG) {
-      console.log({finalCaption})
+    if (process.env.BOT_TOKEN) {
+      await sendMessage(caption)
     }
 
     gracefulShutdown()
