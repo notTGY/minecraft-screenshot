@@ -1,5 +1,6 @@
-require('dotenv').config(); // For environment variables
+require('dotenv').config()
 const DEBUG = process.env.DEBUG
+
 global.THREE = require('three')
 global.Worker = require('worker_threads').Worker
 const { createCanvas } = require('node-canvas-webgl/lib')
@@ -10,14 +11,26 @@ const { Viewer, WorldView, getBufferFromStream } = require('prismarine-viewer').
 const mineflayer = require('mineflayer')
 const { execSync } = require('child_process')
 
-//const K4 = true // use 4K UHD or 360p
 
-const takeScreenshot = async (K4) => {
-  // Configuration constants
-  const viewDistance = 16 // Number of chunks around the center to render
-  const width = K4 ? 3840 : 640     // Screenshot width in pixels
-  const height = K4 ? 2160 : 360    // Screenshot height in pixels
-  const version = '1.21.4' // Minecraft version (must match the server)
+const viewDistance = 64 // Number of chunks around the center to render
+const mcVersion = '1.21.4' // Minecraft version (must match the server)
+
+const whFromQual = (qual) => {
+  switch (qual) {
+    case '4k':
+      return { width: 3840, height: 2160 }
+    case '360p':
+      return { width: 640, height: 360 }
+    default:
+      throw new Error(`Unknown quality: ${qual}`)
+  }
+}
+
+const takeScreenshot = async (qual, dirs) => {
+  const { width, height } = whFromQual(qual)
+  if (dirs.length === 0) {
+    throw new Error('No directions')
+  }
 
   const canvas = createCanvas(width, height)
   const renderer = new THREE.WebGLRenderer({ canvas })
@@ -25,68 +38,73 @@ const takeScreenshot = async (K4) => {
 
   const bot = mineflayer.createBot()
 
-let prevLoaded = -1 
-const check = (res) => {
-  const loadedChunks = Object.keys(bot.world.async.columns).length
-  if (DEBUG) {
-    console.log(`Chunks loaded: ${loadedChunks}`)
+  let prevLoaded = -1 
+  const check = (res) => {
+    const loadedChunks = Object.keys(bot.world.async.columns).length
+    if (DEBUG) {
+      console.log(`Chunks loaded: ${loadedChunks}`)
+    }
+    if (loadedChunks >= (viewDistance * 2 + 1) * (viewDistance * 2 + 1) || loadedChunks == prevLoaded) {
+      res()
+    } else {
+      setTimeout(() => {
+        check(res)
+      }, 1000)
+    }
+    prevLoaded = loadedChunks
   }
-  if (loadedChunks >= (viewDistance * 2 + 1) * (viewDistance * 2 + 1) || loadedChunks == prevLoaded) {
-    res()
-  } else {
-    setTimeout(() => {
-      check(res)
-    }, 1000)
-  }
-  prevLoaded = loadedChunks
-}
-  // Wait for the bot to spawn in the world
-  await new Promise(resolve => bot.once('spawn', () => {
-    check(resolve)
-  }))
-
-  // Use the bot's spawn position as the center of the view
+  await new Promise(
+    resolve => bot.once('spawn', () => {
+      check(resolve)
+    })
+  )
   const center = bot.entity.position.clone()
-
-  // Set the viewer's Minecraft version
-  if (!viewer.setVersion(version)) {
+  if (!viewer.setVersion(mcVersion)) {
     console.error('Failed to set viewer version')
     return false
   }
 
-  // Create a WorldView using the bot's world, centered on the bot's position
   const worldView = new WorldView(bot.world, viewDistance, center)
   viewer.listen(worldView)
 
-  // Position the camera 10 blocks above and offset from the center for a good view
-  const cameraPos = center.clone().add(new Vec3(0, 10, 0))
-  viewer.camera.position.set(cameraPos.x, cameraPos.y, cameraPos.z)
+  const snap = async (dir) => {
+    viewer.camera.position.set(center.x, center.y+10, center.z)
 
-  // Make the camera look at the center (bot's position)
-  viewer.camera.lookAt(new THREE.Vector3(center.x-10, center.y+10, center.z))
+    let x = center.x
+    let z = center.z
+    switch (dir) {
+      case "south":
+      default:
+        z += 10
+        break
+      case "north":
+        z -= 10
+        break
+      case "east":
+        x += 10
+        break
+      case "west":
+        x -= 10
+        break
+    }
 
-  // Initialize the WorldView and wait for chunks to load
-  await worldView.init(center)
-  await viewer.world.waitForChunksToRender()
+    viewer.camera.lookAt(new THREE.Vector3(x, center.y+10, z))
 
-  // Render the scene
-  renderer.render(viewer.scene, viewer.camera)
+    await worldView.init(center)
+    await viewer.world.waitForChunksToRender()
+    renderer.render(viewer.scene, viewer.camera)
+    const imageStream = canvas.createJPEGStream({
+      bufsize: 4096,
+      quality: 100,
+      progressive: false
+    })
 
-  // Create a JPEG stream from the canvas
-  const imageStream = canvas.createJPEGStream({
-    bufsize: 4096,
-    quality: 100,
-    progressive: false
-  })
-
-  const buf = await getBufferFromStream(imageStream)
-  await fs.writeFile(K4 ? 'output_4k.jpg' : 'output.jpg', buf)
-  //execSync('output.png')
-
-  if (DEBUG) {
-    console.log('saved')
+    const buf = await getBufferFromStream(imageStream)
+    await fs.writeFile(`output_${qual}_${dir}.jpg`, buf)
   }
-  //process.exit(0)
+  for (const dir of dirs) {
+    await snap(dir)
+  }
 }
 
 module.exports = { takeScreenshot }

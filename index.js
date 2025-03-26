@@ -1,14 +1,15 @@
-require('dotenv').config(); // For environment variables
+require('dotenv').config()
+const TelegramBot = require('node-telegram-bot-api')
 const { spawn } = require('node:child_process')
 const { resolve } = require('node:path')
+const fs = require('node:fs')
+
 const { takeScreenshot } = require('./screenshot.js')
 const { captionAi } = require('./ai-caption.js')
-const fs = require('node:fs')
 
 
 const startTime = Date.now()
 
-const TelegramBot = require('node-telegram-bot-api')
 const chatId = process.env.TGID
 const botToken = process.env.BOT_TOKEN
 const DEBUG = process.env.DEBUG
@@ -18,16 +19,16 @@ const bot = new TelegramBot(botToken, {
   filepath: false,
 })
 
-
-
 const args = process.argv.slice(2)
 if (args.length > 0 && args[0] === "regen") {
   fs.rmSync('./world', {
     force: true,
     recursive: true,
   })
+  if (DEBUG) {
+    console.log("removed world")
+  }
 }
-
 
 const s = spawn(
   'java',
@@ -44,21 +45,22 @@ const gracefulShutdown = () => {
 
 let seed = null
 const getSeed = (data) => {
-  seed = new String(data).substring(data.indexOf('Seed: ['))
+  seed = new String(data)
+    .substring(data.indexOf('Seed: ['))
 }
 const onServerReady = async () => {
   s.stdin.write('/seed\n')
 
-  await takeScreenshot(false)
-  await takeScreenshot(true)
+  await takeScreenshot('360p', ["north"])
+  await takeScreenshot('4k', ["north", "south", "east", "west"])
 
-  const cap = await captionAi()
+  const cap = await captionAi('./output_360p_north.jpg')
   const finalCaption = `${cap}
 
 ${seed}
 #MinecraftSeeds #Minecraft`
 
-  const filename = 'output_4k'
+  const filename = 'output_4k_north'
   const fileOptionsPhoto = {
     filename,
     contentType: 'image/jpg',

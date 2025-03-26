@@ -31,3 +31,9 @@ node index.js regen
 
 ![4 biomes](./4-biomes.png)
 ![jungle and ocean](./jungle-ocean.jpg)
+
+## Potential for improvement
+
+Maybe use Moondream with custom prompt to yeild better
+result for less money?
+[docs](https://github.com/rohan-kulkarni-25/moondream/blob/main/clients/node/README.MD)
