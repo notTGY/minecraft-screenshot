@@ -37,3 +37,9 @@ node index.js regen
 Maybe use Moondream with custom prompt to yeild better
 result for less money?
 [docs](https://github.com/rohan-kulkarni-25/moondream/blob/main/clients/node/README.MD)
+
+
+## TODO
+
+[ ] ollama, moondream, etc support
+[ ] Dockerfile

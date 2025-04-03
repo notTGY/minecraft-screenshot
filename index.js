@@ -1,19 +1,17 @@
 require('dotenv').config()
+const DEBUG = process.env.DEBUG
+
 const minecraftWrap = require('minecraft-wrap')
 const fs = require('node:fs')
-
 const { takeScreenshot } = require('./src/MCBot.js')
 const { captionAi } = require('./src/AICaption.js')
 const { sendMessage } = require('./src/reporter.js')
 
-
 const startTime = Date.now()
-
-const DEBUG = process.env.DEBUG
-
-const mcVersion = '1.21.4' // Minecraft version (must match the server)
+const mcVersion = '1.21.4' // Minecraft version (must be supported by mineflayer, prismarine-viewer)
 const viewDistance = 64
 const jarLocation = './minecraft_server.jar'
+const serverRoot = './server'
 
 const sleep = (t) => new Promise(r => setTimeout(r, t))
 
@@ -23,59 +21,25 @@ const getSeed = (data) => {
     .substring(data.indexOf('Seed: '))
 }
 
-const downloadServer = () => new Promise(
-  (resolve, reject) => {
-    minecraftWrap.downloadServer(mcVersion, jarLocation, (err) => {
+const promisify = (fn, fnThis, ...args) => {
+  return new Promise((res, rej) => {
+    fn.call(fnThis, ...args, (err) => {
       if (err) {
-        reject(err)
+        rej(err)
       }
-      resolve()
+      res()
     })
-  },
-)
-
-const startServer = (s) => new Promise(
-  (resolve, reject) => {
-    s.startServer({
-      'online-mode': false,
-      'view-distance': viewDistance,
-      difficulty: 0,
-      'spawn-animals': false,
-      'spawn-npcs': false,
-      'spawn-monsters': false,
-    }, function (err) {
-      if (err) {
-        reject(err)
-        return
-      }
-      resolve()
-    })
-  }
-)
-const deleteServerData = (s) => new Promise(
-  (resolve, reject) => {
-    s.deleteServerData({
-    }, function (err) {
-      if (err) {
-        reject(err)
-        return
-      }
-      if (DEBUG) {
-        console.log('removed data')
-      }
-      resolve()
-    })
-  }
-)
+  })
+}
 
 const start = async () => {
   if (!fs.existsSync(jarLocation)) {
-    await downloadServer()
+    await promisify(minecraftWrap.downloadServer, minecraftWrap, mcVersion, jarLocation)
   }
 
   const s = new minecraftWrap.WrapServer(
     jarLocation,
-    '.',
+    serverRoot,
   )
   s.on('line', (line) => {
     if (DEBUG) {
@@ -87,23 +51,29 @@ const start = async () => {
   })
   const args = process.argv.slice(2)
   if (args.length > 0 && args[0] === "regen") {
-    await deleteServerData(s)
+    await promisify(s.deleteServerData, s)
+    if (DEBUG) {
+      console.log('deleted server data')
+    }
   }
-  await startServer(s)
+  await promisify(s.startServer, s, {
+    'online-mode': false,
+    'view-distance': viewDistance,
+    difficulty: 0,
+    'spawn-animals': false,
+    'spawn-npcs': false,
+    'spawn-monsters': false,
+  })
   if (DEBUG) {
     console.log('started server')
   }
 
-  const gracefulShutdown = () => {
-    s.stopServer((err) => {
-      if (err) {
-        console.log(err)
-      }
-      if (DEBUG) {
-        console.log('server stopped')
-      }
-      process.exit(0)
-    })
+  const gracefulShutdown = async () => {
+    await promisify(s.stopServer, s)
+    if (DEBUG) {
+      console.log('server stopped')
+    }
+    process.exit(0)
   }
   process.on('SIGTERM', gracefulShutdown);
   process.on('SIGINT', gracefulShutdown);
@@ -142,9 +112,7 @@ ${seed}
   if (process.env.BOT_TOKEN) {
     await sendMessage(caption)
   } else {
-    if (DEBUG) {
-      console.log('Reporter disabled, add BOT_TOKEN in .env')
-    }
+    console.log('Reporter disabled, add BOT_TOKEN in .env')
   }
 
   const endTime = Date.now()

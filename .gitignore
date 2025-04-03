@@ -3,20 +3,8 @@
 node_modules
 package-lock.json
 
-libraries
-logs
-versions
-world
-banned-ips.json
-banned-players.json
-ops.json
-usercache.json
-whitelist.json
-minecraft_server.jar
-server.properties
-eula.txt
+server
 
-*.log
-crash-reports
+minecraft_server.jar
 
 output
