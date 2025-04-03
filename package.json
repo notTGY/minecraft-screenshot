@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
+    "minecraft-wrap": "^1.6.0",
     "mineflayer": "^4.25.0",
     "node-canvas-webgl": "github:PrismarineJS/node-canvas-webgl",
     "node-telegram-bot-api": "^0.66.0",

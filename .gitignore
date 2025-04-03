@@ -17,7 +17,4 @@ minecraft_server.jar
 *.log
 crash-reports
 
-version_manifest.json
-manifest_*.json
-
 output
