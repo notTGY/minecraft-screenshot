@@ -29,8 +29,8 @@ node index.js regen
 
 ## Examples
 
-![4 biomes](./media/4-biomes.png)
-![jungle and ocean](./media/jungle-ocean.jpg)
+![4 biomes](./docs/4-biomes.png)
+![jungle and ocean](./docs/jungle-ocean.jpg)
 
 ## Potential for improvement
 
