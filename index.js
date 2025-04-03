@@ -1,12 +1,10 @@
 require('dotenv').config()
 const minecraftWrap = require('minecraft-wrap')
-const TelegramBot = require('node-telegram-bot-api')
-const { spawn } = require('node:child_process')
-const { resolve } = require('node:path')
 const fs = require('node:fs')
 
-const { takeScreenshot } = require('./screenshot.js')
-const { captionAi } = require('./ai-caption.js')
+const { takeScreenshot } = require('./src/MCBot.js')
+const { captionAi } = require('./src/AICaption.js')
+const { sendMessage } = require('./src/reporter.js')
 
 
 const startTime = Date.now()
@@ -17,38 +15,6 @@ const mcVersion = '1.21.4' // Minecraft version (must match the server)
 const viewDistance = 64
 const jarLocation = './minecraft_server.jar'
 
-const sendMessage = async (caption) => {
-  const chatId = process.env.TGID
-  const botToken = process.env.BOT_TOKEN
-  const bot = new TelegramBot(botToken, {
-    polling: true,
-    filepath: false,
-  })
-  const filename = '4k_north'
-  const fileOptionsPhoto = {
-    filename,
-    contentType: 'image/jpg',
-  }
-  const streamPhoto = fs.createReadStream(`./output/${filename}.jpg`)
-  await bot.sendPhoto(chatId, streamPhoto, { caption }, fileOptionsPhoto)
-
-  if (DEBUG) {
-    console.log({caption})
-  }
-}
-
-const args = process.argv.slice(2)
-/*
-if (args.length > 0 && args[0] === "regen") {
-  fs.rmSync('./world', {
-    force: true,
-    recursive: true,
-  })
-  if (DEBUG) {
-    console.log("removed world")
-  }
-}
-*/
 const sleep = (t) => new Promise(r => setTimeout(r, t))
 
 let seed = null
@@ -73,6 +39,10 @@ const startServer = (s) => new Promise(
     s.startServer({
       'online-mode': false,
       'view-distance': viewDistance,
+      difficulty: 0,
+      'spawn-animals': false,
+      'spawn-npcs': false,
+      'spawn-monsters': false,
     }, function (err) {
       if (err) {
         reject(err)
@@ -115,6 +85,7 @@ const start = async () => {
       getSeed(line)
     }
   })
+  const args = process.argv.slice(2)
   if (args.length > 0 && args[0] === "regen") {
     await deleteServerData(s)
   }
@@ -170,6 +141,10 @@ ${seed}
 
   if (process.env.BOT_TOKEN) {
     await sendMessage(caption)
+  } else {
+    if (DEBUG) {
+      console.log('Reporter disabled, add BOT_TOKEN in .env')
+    }
   }
 
   const endTime = Date.now()
