@@ -3,8 +3,8 @@
 node_modules
 package-lock.json
 
-server
-
 minecraft_server.jar
+server
+versions
 
 output

@@ -10,7 +10,8 @@ const { sendMessage } = require('./src/reporter.js')
 const startTime = Date.now()
 const mcVersion = '1.21.4' // Minecraft version (must be supported by mineflayer, prismarine-viewer)
 const viewDistance = 64
-const jarLocation = './minecraft_server.jar'
+const path = require('node:path')
+const jarLocation = path.resolve('./minecraft_server.jar')
 const serverRoot = './server'
 
 const sleep = (t) => new Promise(r => setTimeout(r, t))
@@ -35,6 +36,9 @@ const promisify = (fn, fnThis, ...args) => {
 const start = async () => {
   if (!fs.existsSync(jarLocation)) {
     await promisify(minecraftWrap.downloadServer, minecraftWrap, mcVersion, jarLocation)
+    if (DEBUG) {
+      console.log('downloaded jar file')
+    }
   }
 
   const s = new minecraftWrap.WrapServer(
