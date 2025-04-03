@@ -13,6 +13,8 @@ ops.json
 usercache.json
 whitelist.json
 minecraft_server.jar
+server.properties
+eula.txt
 
 *.log
 crash-reports
