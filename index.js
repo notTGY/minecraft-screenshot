@@ -92,7 +92,7 @@ const start = async () => {
   await takeScreenshot({
     mcVersion,
     viewDistance,
-    quality: '360p',
+    quality: '206p',
     directions: ["north"],
   })
   await takeScreenshot({
@@ -104,7 +104,7 @@ const start = async () => {
 
   let cap = ''
   if (process.env.HF_API_TOKEN) {
-    cap = await captionAi('./output/360p_north.jpg')
+    cap = await captionAi('./output/206p_north.jpg')
   } else {
     cap = 'AI DISABLED, add HF_API_TOKEN in .env'
   }

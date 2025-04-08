@@ -1,5 +1,7 @@
 require('dotenv').config()
+const DEBUG = process.env.DEBUG
 const TelegramBot = require('node-telegram-bot-api')
+const fs = require('node:fs')
 
 const sendMessage = async (caption) => {
   const chatId = process.env.TGID

@@ -18,6 +18,8 @@ const whFromQuality = (quality) => {
       return { width: 3840, height: 2160 }
     case '360p':
       return { width: 640, height: 360 }
+    case '206p':
+      return { width: 336, height: 206 }
     default:
       throw new Error(`Unknown quality: ${qual}`)
   }
